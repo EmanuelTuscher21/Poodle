@@ -39,6 +39,45 @@
 </head>
 <body id="appBody" class="theme-light min-h-screen flex flex-col font-sans transition-colors duration-200">
 
+  <!-- AUTHENTICATION OVERLAY (LOGIN / REGISTER) -->
+  <div id="authOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-md">
+          <i data-lucide="dog" class="w-7 h-7"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Poodle Workspace</h2>
+          <p class="text-xs text-slate-500">Sign in or create an account to continue</p>
+        </div>
+      </div>
+
+      <!-- AUTH TABS -->
+      <div class="flex border-b border-slate-200 mb-4">
+        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 pb-2 font-bold text-sm border-b-2 border-indigo-600 text-indigo-600">Log In</button>
+        <button id="tabRegister" onclick="switchAuthTab('register')" class="flex-1 pb-2 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-600">Register</button>
+      </div>
+
+      <!-- AUTH FORM -->
+      <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Username</label>
+          <input id="authUsername" type="text" required placeholder="e.g. alex" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+          <input id="authPassword" type="password" required placeholder="••••••••" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-indigo-500">
+        </div>
+        
+        <p id="authError" class="text-xs text-red-500 hidden font-medium"></p>
+
+        <button id="authSubmitBtn" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg text-sm font-semibold transition shadow-md">
+          Log In
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- TOP HEADER / NAVBAR -->
   <header class="sticky top-0 z-30 glass border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm">
     <div class="flex items-center gap-3">
@@ -49,7 +88,7 @@
         <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
           Poodle Workspace
         </h1>
-        <p class="text-xs text-slate-500">Your personal workspace & canvas</p>
+        <p class="text-xs text-slate-500">Logged in as: <span id="currentUserLabel" class="font-bold text-indigo-600">Guest</span></p>
       </div>
     </div>
 
@@ -73,8 +112,8 @@
         <i data-lucide="download" class="w-5 h-5"></i>
       </button>
       
-      <button id="clearAllBtn" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Clear All Blocks">
-        <i data-lucide="trash-2" class="w-5 h-5"></i>
+      <button onclick="logout()" class="p-2 text-slate-600 hover:bg-slate-200 rounded-lg transition" title="Log Out">
+        <i data-lucide="log-out" class="w-5 h-5"></i>
       </button>
     </div>
   </header>
@@ -82,7 +121,7 @@
   <!-- MAIN CANVAS AREA -->
   <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
     <div id="workspaceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Blocks will render dynamically here -->
+      <!-- Blocks render dynamically -->
     </div>
 
     <!-- EMPTY STATE -->
@@ -100,7 +139,7 @@
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-5">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
         <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
-          <i data-lucide="settings" class="w-5 h-5 text-indigo-600"></i> Workspace Settings
+          <i data-lucide="settings" class="w-5 h-5 text-indigo-600"></i> Settings
         </h3>
         <button id="closeSettingsBtn" class="p-1 text-slate-400 hover:text-slate-600 rounded">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -110,24 +149,12 @@
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-2">Background Theme</label>
         <div class="grid grid-cols-3 gap-3">
-          <button onclick="setTheme('light')" class="p-3 rounded-xl border border-slate-300 bg-slate-50 text-slate-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">
-            <span class="w-4 h-4 rounded-full bg-slate-200"></span> Light
-          </button>
-          <button onclick="setTheme('dark')" class="p-3 rounded-xl border border-slate-300 bg-slate-900 text-white text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">
-            <span class="w-4 h-4 rounded-full bg-slate-700"></span> Dark
-          </button>
-          <button onclick="setTheme('blue')" class="p-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">
-            <span class="w-4 h-4 rounded-full bg-blue-400"></span> Soft Blue
-          </button>
-          <button onclick="setTheme('green')" class="p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">
-            <span class="w-4 h-4 rounded-full bg-emerald-400"></span> Sage Green
-          </button>
-          <button onclick="setTheme('yellow')" class="p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">
-            <span class="w-4 h-4 rounded-full bg-amber-400"></span> Warm Yellow
-          </button>
-          <button onclick="setTheme('red')" class="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">
-            <span class="w-4 h-4 rounded-full bg-rose-400"></span> Rose Red
-          </button>
+          <button onclick="setTheme('light')" class="p-3 rounded-xl border border-slate-300 bg-slate-50 text-slate-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">Light</button>
+          <button onclick="setTheme('dark')" class="p-3 rounded-xl border border-slate-300 bg-slate-900 text-white text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">Dark</button>
+          <button onclick="setTheme('blue')" class="p-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">Blue</button>
+          <button onclick="setTheme('green')" class="p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">Green</button>
+          <button onclick="setTheme('yellow')" class="p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">Yellow</button>
+          <button onclick="setTheme('red')" class="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">Red</button>
         </div>
       </div>
     </div>
@@ -145,12 +172,12 @@
       </div>
 
       <div id="searchResults" class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-3">
-        <!-- Search Results list dynamically -->
+        <!-- Search results dynamically -->
       </div>
     </div>
   </div>
 
-  <!-- FULLSCREEN FOCUS MODAL -->
+  <!-- FULLSCREEN FOCUS MODAL (WITH COMPLETE FORMATTING TOOLBAR) -->
   <div id="fullscreenModal" class="fixed inset-0 bg-white z-50 hidden flex flex-col p-6">
     <div class="flex items-center justify-between pb-4 border-b border-slate-200">
       <div class="flex items-center gap-3">
@@ -168,9 +195,38 @@
       </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto custom-scrollbar my-6 max-w-4xl w-full mx-auto space-y-4">
-      <input id="fsTitle" type="text" class="text-3xl font-bold w-full outline-none bg-transparent text-slate-900 border-b border-transparent focus:border-indigo-500 py-1" placeholder="Title...">
-      <div id="fsContent" contenteditable="true" class="min-h-[300px] outline-none text-slate-700 text-lg leading-relaxed space-y-3"></div>
+    <!-- FULLSCREEN RICH-TEXT FORMATTING TOOLBAR -->
+    <div class="py-2.5 px-4 bg-slate-100/80 border-b border-slate-200 flex items-center gap-2 text-sm text-slate-700 flex-wrap my-2 rounded-xl">
+      <button onclick="formatText('bold')" class="px-2 py-1 hover:bg-slate-200 rounded font-bold" title="Bold">B</button>
+      <button onclick="formatText('italic')" class="px-2 py-1 hover:bg-slate-200 rounded italic" title="Italic">I</button>
+      <button onclick="formatText('underline')" class="px-2 py-1 hover:bg-slate-200 rounded underline" title="Underline">U</button>
+      
+      <span class="text-slate-300">|</span>
+      
+      <!-- FONT FAMILY -->
+      <select onchange="formatText('fontName', this.value)" class="bg-transparent font-medium outline-none cursor-pointer">
+        <option value="sans-serif">Sans-Serif</option>
+        <option value="serif">Serif</option>
+        <option value="monospace">Monospace</option>
+        <option value="cursive">Cursive</option>
+      </select>
+
+      <!-- FONT SIZE (BIGGER CHOICES) -->
+      <select onchange="formatText('fontSize', this.value)" class="bg-transparent font-medium outline-none cursor-pointer">
+        <option value="3">Medium (16px)</option>
+        <option value="4" selected>Large (18px)</option>
+        <option value="5">X-Large (24px)</option>
+        <option value="6">2X-Large (32px)</option>
+        <option value="7">Huge (48px)</option>
+      </select>
+
+      <!-- TEXT COLOR -->
+      <input type="color" onchange="formatText('foreColor', this.value)" class="w-6 h-6 rounded cursor-pointer border-none bg-transparent" title="Text Color">
+    </div>
+
+    <div class="flex-1 overflow-y-auto custom-scrollbar my-4 max-w-4xl w-full mx-auto space-y-4">
+      <input id="fsTitle" type="text" class="text-4xl font-extrabold w-full outline-none bg-transparent text-slate-900 border-b border-transparent focus:border-indigo-500 py-2" placeholder="Title...">
+      <div id="fsContent" contenteditable="true" class="min-h-[400px] outline-none text-slate-800 text-xl leading-relaxed space-y-4"></div>
       <div id="fsImageContainer" class="space-y-4"></div>
     </div>
   </div>
@@ -193,8 +249,11 @@
   </div>
 
   <script>
-    // DATA STATE
-    let blocks = JSON.parse(localStorage.getItem('poodle_blocks')) || [];
+    // DATA & AUTH STATE
+    let users = JSON.parse(localStorage.getItem('poodle_users')) || {};
+    let currentUser = localStorage.getItem('poodle_current_user') || null;
+    let authMode = 'login'; // 'login' or 'register'
+    let blocks = [];
     let currentTheme = localStorage.getItem('poodle_theme') || 'light';
     let deleteTargetId = null;
     let currentFsIndex = 0;
@@ -203,18 +262,90 @@
     document.addEventListener('DOMContentLoaded', () => {
       setTheme(currentTheme);
       lucide.createIcons();
-      renderBlocks();
 
-      // Enter key creates block when not typing inside text box
+      if (currentUser && users[currentUser]) {
+        showApp();
+      } else {
+        showAuth();
+      }
+
+      // Enter key shortcut
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) && !e.target.isContentEditable) {
+        if (currentUser && e.key === 'Enter' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) && !e.target.isContentEditable) {
           e.preventDefault();
           addNewBlock();
         }
       });
     });
 
-    // SET THEME
+    // AUTH FUNCTIONS
+    function showAuth() {
+      document.getElementById('authOverlay').classList.remove('hidden');
+    }
+
+    function showApp() {
+      document.getElementById('authOverlay').classList.add('hidden');
+      document.getElementById('currentUserLabel').innerText = currentUser;
+      blocks = users[currentUser].blocks || [];
+      renderBlocks();
+    }
+
+    function switchAuthTab(mode) {
+      authMode = mode;
+      const tabLogin = document.getElementById('tabLogin');
+      const tabRegister = document.getElementById('tabRegister');
+      const submitBtn = document.getElementById('authSubmitBtn');
+      document.getElementById('authError').classList.add('hidden');
+
+      if (mode === 'login') {
+        tabLogin.className = 'flex-1 pb-2 font-bold text-sm border-b-2 border-indigo-600 text-indigo-600';
+        tabRegister.className = 'flex-1 pb-2 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+        submitBtn.innerText = 'Log In';
+      } else {
+        tabRegister.className = 'flex-1 pb-2 font-bold text-sm border-b-2 border-indigo-600 text-indigo-600';
+        tabLogin.className = 'flex-1 pb-2 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-600';
+        submitBtn.innerText = 'Create Account';
+      }
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const userVal = document.getElementById('authUsername').value.trim().toLowerCase();
+      const passVal = document.getElementById('authPassword').value;
+      const errEl = document.getElementById('authError');
+
+      if (!userVal || !passVal) return;
+
+      if (authMode === 'register') {
+        if (users[userVal]) {
+          errEl.innerText = 'Username already exists!';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        users[userVal] = { password: passVal, blocks: [] };
+        localStorage.setItem('poodle_users', JSON.stringify(users));
+        currentUser = userVal;
+        localStorage.setItem('poodle_current_user', currentUser);
+        showApp();
+      } else {
+        if (!users[userVal] || users[userVal].password !== passVal) {
+          errEl.innerText = 'Invalid username or password.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        currentUser = userVal;
+        localStorage.setItem('poodle_current_user', currentUser);
+        showApp();
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('poodle_current_user');
+      showAuth();
+    }
+
+    // THEME SETTER
     function setTheme(theme) {
       currentTheme = theme;
       localStorage.setItem('poodle_theme', theme);
@@ -223,7 +354,10 @@
 
     // SAVE STATE
     function saveState() {
-      localStorage.setItem('poodle_blocks', JSON.stringify(blocks));
+      if (currentUser && users[currentUser]) {
+        users[currentUser].blocks = blocks;
+        localStorage.setItem('poodle_users', JSON.stringify(users));
+      }
       renderBlocks();
     }
 
@@ -234,14 +368,14 @@
         title: 'New Block',
         content: 'Type your text here...',
         images: [],
-        isPublic: false, // Default to private
+        isPublic: false,
         updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       blocks.unshift(newBlock);
       saveState();
     }
 
-    // RENDER BLOCKS TO CANVAS
+    // RENDER BLOCKS
     function renderBlocks() {
       const grid = document.getElementById('workspaceGrid');
       const emptyState = document.getElementById('emptyState');
@@ -262,11 +396,10 @@
         card.innerHTML = `
           <!-- CARD HEADER -->
           <div class="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between gap-2">
-            <input type="text" value="${escapeHtml(block.title)}" onchange="updateTitle('${block.id}', this.value)" class="bg-transparent font-semibold text-slate-800 outline-none w-full text-sm focus:border-b focus:border-indigo-500">
+            <input type="text" value="${escapeHtml(block.title)}" onchange="updateTitle('${block.id}', this.value)" class="bg-transparent font-bold text-slate-800 outline-none w-full text-base focus:border-b focus:border-indigo-500">
             
             <div class="flex items-center gap-1">
-              <!-- PRIVACY TOGGLE -->
-              <button onclick="togglePrivacy('${block.id}')" class="px-2 py-1 text-xs rounded-md font-medium flex items-center gap-1 transition ${block.isPublic ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}" title="Toggle Public/Private">
+              <button onclick="togglePrivacy('${block.id}')" class="px-2 py-1 text-xs rounded-md font-medium flex items-center gap-1 transition ${block.isPublic ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}">
                 <i data-lucide="${block.isPublic ? 'globe' : 'lock'}" class="w-3.5 h-3.5"></i>
                 <span>${block.isPublic ? 'Public' : 'Private'}</span>
               </button>
@@ -288,7 +421,6 @@
             
             <span class="text-slate-300">|</span>
             
-            <!-- FONT FAMILY -->
             <select onchange="formatText('fontName', this.value)" class="bg-transparent text-xs outline-none cursor-pointer">
               <option value="sans-serif">Sans-Serif</option>
               <option value="serif">Serif</option>
@@ -296,27 +428,25 @@
               <option value="cursive">Cursive</option>
             </select>
 
-            <!-- FONT SIZE -->
             <select onchange="formatText('fontSize', this.value)" class="bg-transparent text-xs outline-none cursor-pointer">
-              <option value="2">Small</option>
-              <option value="3" selected>Normal</option>
-              <option value="5">Large</option>
-              <option value="7">Huge</option>
+              <option value="3">Medium</option>
+              <option value="4" selected>Large</option>
+              <option value="5">X-Large</option>
+              <option value="6">2X-Large</option>
             </select>
 
-            <!-- TEXT COLOR -->
             <input type="color" onchange="formatText('foreColor', this.value)" class="w-5 h-5 rounded cursor-pointer border-none bg-transparent" title="Text Color">
           </div>
 
-          <!-- EDITABLE CONTENT -->
+          <!-- EDITABLE CONTENT (LARGER TYPOGRAPHY) -->
           <div class="p-4 flex-1 flex flex-col space-y-3">
-            <div contenteditable="true" oninput="updateContent('${block.id}', this.innerHTML)" class="outline-none text-slate-600 text-sm min-h-[80px] flex-1">${block.content}</div>
+            <div contenteditable="true" oninput="updateContent('${block.id}', this.innerHTML)" class="outline-none text-slate-700 text-base leading-relaxed min-h-[100px] flex-1">${block.content}</div>
 
             <!-- IMAGES -->
             <div class="space-y-2">
               ${block.images.map((img, imgIdx) => `
                 <div class="relative group rounded-lg overflow-hidden border border-slate-200">
-                  <img src="${img}" class="w-full h-32 object-cover">
+                  <img src="${img}" class="w-full h-36 object-cover">
                   <button onclick="removeImage('${block.id}',${imgIdx})" class="absolute top-1 right-1 bg-black/60 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition">
                     <i data-lucide="x" class="w-3 h-3"></i>
                   </button>
@@ -324,7 +454,6 @@
               `).join('')}
             </div>
 
-            <!-- IMPORT IMAGE TOOLBAR -->
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
               <label class="cursor-pointer hover:text-indigo-600 flex items-center gap-1">
                 <i data-lucide="image" class="w-3.5 h-3.5"></i>
@@ -342,21 +471,16 @@
       lucide.createIcons();
     }
 
-    // TEXT FORMATTING EXEC COMMAND
+    // FORMAT EXEC COMMAND
     function formatText(cmd, value = null) {
       document.execCommand(cmd, false, value);
     }
 
-    // PRIVACY TOGGLE
     function togglePrivacy(id) {
       const b = blocks.find(x => x.id === id);
-      if (b) {
-        b.isPublic = !b.isPublic;
-        saveState();
-      }
+      if (b) { b.isPublic = !b.isPublic; saveState(); }
     }
 
-    // UPDATE HANDLERS
     function updateTitle(id, val) {
       const b = blocks.find(x => x.id === id);
       if (b) { b.title = val; saveState(); }
@@ -364,7 +488,11 @@
 
     function updateContent(id, val) {
       const b = blocks.find(x => x.id === id);
-      if (b) { b.content = val; localStorage.setItem('poodle_blocks', JSON.stringify(blocks)); }
+      if (b) {
+        b.content = val;
+        users[currentUser].blocks = blocks;
+        localStorage.setItem('poodle_users', JSON.stringify(users));
+      }
     }
 
     function handleImageUpload(id, event) {
@@ -414,7 +542,7 @@
     document.getElementById('settingsBtn').onclick = () => settingsModal.classList.remove('hidden');
     document.getElementById('closeSettingsBtn').onclick = () => settingsModal.classList.add('hidden');
 
-    // BROWSE & SEARCH MODAL (PUBLIC ONLY)
+    // BROWSE & SEARCH MODAL (PUBLIC POSTS ACROSS ALL USERS)
     const browseModal = document.getElementById('browseModal');
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
@@ -426,19 +554,21 @@
       searchInput.focus();
     };
 
-    document.getElementById('closeBrowseBtn').onclick = () => {
-      browseModal.classList.add('hidden');
-    };
+    document.getElementById('closeBrowseBtn').onclick = () => browseModal.classList.add('hidden');
 
-    searchInput.oninput = (e) => {
-      renderSearchResults(e.target.value);
-    };
+    searchInput.oninput = (e) => renderSearchResults(e.target.value);
 
     function renderSearchResults(query) {
       const q = query.toLowerCase().trim();
-      // Search ONLY public posts
-      const publicBlocks = blocks.filter(b => b.isPublic);
-      const filtered = publicBlocks.filter(b => b.title.toLowerCase().includes(q) || b.content.toLowerCase().includes(q));
+      let allPublicBlocks = [];
+
+      Object.keys(users).forEach(u => {
+        (users[u].blocks || []).forEach(b => {
+          if (b.isPublic) allPublicBlocks.push({ ...b, author: u });
+        });
+      });
+
+      const filtered = allPublicBlocks.filter(b => b.title.toLowerCase().includes(q) || b.content.toLowerCase().includes(q));
 
       searchResults.innerHTML = '';
       if (filtered.length === 0) {
@@ -452,20 +582,15 @@
         item.innerHTML = `
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(block.title)}</h4>
-            <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">Public</span>
+            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">By @${block.author}</span>
           </div>
           <p class="text-xs text-slate-500 line-clamp-2 mt-1">${block.content.replace(/<[^>]*>?/gm, '')}</p>
         `;
-        item.onclick = () => {
-          browseModal.classList.add('hidden');
-          const idx = blocks.findIndex(x => x.id === block.id);
-          if (idx !== -1) openFullscreen(idx);
-        };
         searchResults.appendChild(item);
       });
     }
 
-    // FULLSCREEN FOCUS
+    // FULLSCREEN FOCUS MODE
     const fsModal = document.getElementById('fullscreenModal');
     const fsTitle = document.getElementById('fsTitle');
     const fsContent = document.getElementById('fsContent');
@@ -485,7 +610,7 @@
       fsContent.innerHTML = b.content;
 
       fsImageContainer.innerHTML = b.images.map(img => `
-        <img src="${img}" class="w-full max-h-[400px] object-cover rounded-xl border border-slate-200">
+        <img src="${img}" class="w-full max-h-[500px] object-cover rounded-xl border border-slate-200">
       `).join('');
 
       fsTitle.onchange = (e) => { updateTitle(b.id, e.target.value); };
@@ -502,17 +627,11 @@
 
     // UTILS
     document.getElementById('addBlockBtn').onclick = addNewBlock;
-    document.getElementById('clearAllBtn').onclick = () => {
-      if (confirm('Are you sure you want to delete ALL blocks?')) {
-        blocks = [];
-        saveState();
-      }
-    };
     document.getElementById('exportBtn').onclick = () => {
       const blob = new Blob([JSON.stringify(blocks, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'poodle-workspace.json';
+      a.download = `${currentUser}-workspace.json`;
       a.click();
     };
 
