@@ -535,8 +535,10 @@
       const b = blocks.find(x => x.id === id);
       if (b) {
         b.content = val;
-        users[currentUser].blocks = blocks;
-        localStorage.setItem('poodle_users', JSON.stringify(users));
+        if (currentUser && users[currentUser]) {
+          users[currentUser].blocks = blocks;
+          localStorage.setItem('poodle_users', JSON.stringify(users));
+        }
       }
     }
 
@@ -594,6 +596,8 @@
     const searchResults = document.getElementById('searchResults');
 
     document.getElementById('browseBtn').onclick = () => {
+      // Fresh re-read of all user data from local storage so cross-account posts sync immediately
+      users = JSON.parse(localStorage.getItem('poodle_users')) || {};
       browseModal.classList.remove('hidden');
       searchInput.value = '';
       renderSearchResults('');
@@ -625,7 +629,7 @@
         return;
       }
 
-      filtered.forEach((block, index) => {
+      filtered.forEach((block) => {
         const item = document.createElement('div');
         item.className = 'p-3 rounded-lg border border-slate-200 hover:border-indigo-500 hover:bg-slate-50 transition cursor-pointer flex flex-col gap-1';
         
