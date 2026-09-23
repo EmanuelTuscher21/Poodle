@@ -6,9 +6,7 @@
     <title>Interactive Workspace Canvas</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Font Awesome for additional rich icons -->
+    <!-- Font Awesome for rich icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
@@ -50,18 +48,21 @@
             color: #64748b;
             cursor: text;
         }
-        /* Canvas box resize handles styling */
         .workspace-box {
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
         .workspace-box:focus-within {
             border-color: #0ea5e9;
             box-shadow: 0 0 20px -5px rgba(14, 165, 233, 0.3);
         }
-        .drag-over {
-            border-style: dashed !important;
-            border-color: #38bdf8 !important;
-            background-color: rgba(56, 189, 248, 0.08) !important;
+        /* Highlight animation when jumping to block */
+        @keyframes blockHighlight {
+            0% { ring-width: 4px; ring-color: #38bdf8; transform: scale(1.02); }
+            100% { ring-width: 0px; transform: scale(1); }
+        }
+        .block-highlight {
+            animation: blockHighlight 1.2s ease-out;
+            border-color: #0ea5e9 !important;
         }
     </style>
 </head>
@@ -70,12 +71,21 @@
     <!-- Top Navigation Bar -->
     <header class="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-20 shrink-0">
         <div class="flex items-center space-x-3">
-            <div class="p-2 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-400">
-                <i class="fa-solid fa-cubes text-xl"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg text-slate-100 leading-tight">FlexCanvas Workspace</h1>
-                <p class="text-xs text-slate-400">Press <kbd class="px-1.5 py-0.5 text-[10px] bg-slate-800 border border-slate-700 rounded text-sky-300 font-mono">Enter</kbd> to spawn a new block</p>
+            <button id="toggleDrawerBtn" class="p-2.5 text-slate-300 hover:text-sky-400 hover:bg-slate-800 rounded-xl border border-slate-800 transition-all flex items-center gap-2" title="Browse Blocks Drawer">
+                <i class="fa-solid fa-list-ul text-lg"></i>
+                <span class="hidden sm:inline text-xs font-medium">Browse Blocks</span>
+            </button>
+
+            <div class="h-6 w-px bg-slate-800 mx-1"></div>
+
+            <div class="flex items-center space-x-2">
+                <div class="p-2 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-400">
+                    <i class="fa-solid fa-cubes text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-100 leading-tight">FlexCanvas Workspace</h1>
+                    <p class="text-xs text-slate-400">Press <kbd class="px-1.5 py-0.5 text-[10px] bg-slate-800 border border-slate-700 rounded text-sky-300 font-mono">Enter</kbd> to spawn block</p>
+                </div>
             </div>
         </div>
 
@@ -104,38 +114,129 @@
         </div>
     </header>
 
-    <!-- Main Workspace Container -->
-    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative bg-radial-grid" id="mainCanvas">
-        <!-- Shortcut Bar & Quick Stats -->
-        <div class="max-w-7xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 bg-slate-800/40 p-3 rounded-xl border border-slate-800/60">
-            <div class="flex flex-wrap items-center gap-4">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-keyboard text-sky-400"></i> Keybindings:</span>
-                <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-slate-300"><kbd class="font-mono text-sky-300">Enter</kbd> = Add New Box</span>
-                <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-slate-300"><kbd class="font-mono text-sky-300">Esc</kbd> = Unfocus</span>
+    <div class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Slide-out Block Browser Sidebar / Drawer -->
+        <aside id="blockDrawer" class="w-80 bg-slate-900 border-r border-slate-800 z-30 flex flex-col transition-all duration-300 -ml-80 absolute top-0 bottom-0 left-0 shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <h2 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-compass text-sky-400"></i> Block Navigator
+                </h2>
+                <button id="closeDrawerBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div class="flex items-center space-x-4">
-                <span>Blocks: <strong id="boxCount" class="text-sky-400 font-semibold">0</strong></span>
-            </div>
-        </div>
 
-        <!-- Dynamic Grid/Flex Board Container for created boxes -->
-        <div id="workspaceGrid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start pb-24 min-h-[70vh]">
-            <!-- Dynamic workspace boxes inserted here -->
-        </div>
-
-        <!-- Empty State Prompt -->
-        <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none">
-            <div class="w-20 h-20 bg-slate-800/80 border border-slate-700/60 rounded-3xl flex items-center justify-center mb-4 text-sky-400 shadow-2xl">
-                <i class="fa-solid fa-layer-group text-3xl"></i>
+            <!-- Block List Container -->
+            <div id="drawerBlockList" class="flex-1 overflow-y-auto p-3 space-y-2">
+                <!-- Dynamically populated drawer items -->
             </div>
-            <h2 class="text-xl font-semibold text-slate-200 mb-1">Your canvas is empty</h2>
-            <p class="text-slate-400 text-sm max-w-sm mb-6">Press <kbd class="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-sky-400 font-mono text-xs">Enter</kbd> anywhere on the page or click below to start adding custom blocks.</p>
-            <button id="emptyAddBtn" class="pointer-events-auto bg-sky-600 hover:bg-sky-500 text-white font-medium px-5 py-2.5 rounded-xl shadow-lg shadow-sky-600/20 transition-all flex items-center space-x-2">
-                <i class="fa-solid fa-plus"></i>
-                <span>Create Workspace Block</span>
-            </button>
+            
+            <div class="p-3 border-t border-slate-800/80 bg-slate-950/40 text-[11px] text-slate-500 text-center">
+                Click any block to scroll to it or open in full screen
+            </div>
+        </aside>
+
+        <!-- Main Workspace Container -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative bg-radial-grid" id="mainCanvas">
+            <!-- Shortcut Bar & Quick Stats -->
+            <div class="max-w-7xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 bg-slate-800/40 p-3 rounded-xl border border-slate-800/60">
+                <div class="flex flex-wrap items-center gap-4">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-keyboard text-sky-400"></i> Keybindings:</span>
+                    <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-slate-300"><kbd class="font-mono text-sky-300">Enter</kbd> = Add New Box</span>
+                    <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-slate-300"><kbd class="font-mono text-sky-300">Esc</kbd> = Exit Fullscreen / Unfocus</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span>Total Blocks: <strong id="boxCount" class="text-sky-400 font-semibold">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Dynamic Grid Container for created boxes -->
+            <div id="workspaceGrid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start pb-24 min-h-[70vh]">
+                <!-- Dynamic workspace boxes inserted here -->
+            </div>
+
+            <!-- Empty State Prompt -->
+            <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none">
+                <div class="w-20 h-20 bg-slate-800/80 border border-slate-700/60 rounded-3xl flex items-center justify-center mb-4 text-sky-400 shadow-2xl">
+                    <i class="fa-solid fa-layer-group text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-slate-200 mb-1">Your canvas is empty</h2>
+                <p class="text-slate-400 text-sm max-w-sm mb-6">Press <kbd class="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-sky-400 font-mono text-xs">Enter</kbd> anywhere on the page or click below to start adding custom blocks.</p>
+                <button id="emptyAddBtn" class="pointer-events-auto bg-sky-600 hover:bg-sky-500 text-white font-medium px-5 py-2.5 rounded-xl shadow-lg shadow-sky-600/20 transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Create Workspace Block</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Full-Screen Block Focus View Overlay -->
+    <div id="fullscreenModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 hidden flex flex-col p-4 sm:p-6 lg:p-8">
+        <div class="max-w-5xl w-full mx-auto flex-1 bg-slate-900 border border-slate-800 rounded-3xl flex flex-col shadow-2xl overflow-hidden relative">
+            
+            <!-- Fullscreen Bar Controls -->
+            <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <span class="px-2.5 py-1 bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold rounded-lg flex items-center gap-1.5 shrink-0">
+                        <i class="fa-solid fa-expand"></i> Fullscreen Focus Mode
+                    </span>
+                    <input type="text" id="fsBlockTitle" class="bg-transparent font-bold text-slate-100 text-base sm:text-lg focus:outline-none focus:border-b focus:border-sky-500 w-full truncate" placeholder="Block Title...">
+                </div>
+
+                <!-- Navigation between blocks inside fullscreen mode -->
+                <div class="flex items-center space-x-2">
+                    <button id="fsPrevBtn" class="p-2 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl text-sm transition-all flex items-center gap-1.5" title="Previous Block (Left Arrow)">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                        <span class="hidden sm:inline text-xs">Prev</span>
+                    </button>
+                    <span id="fsBlockIndicator" class="text-xs text-slate-400 font-mono px-2">1 / 1</span>
+                    <button id="fsNextBtn" class="p-2 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl text-sm transition-all flex items-center gap-1.5" title="Next Block (Right Arrow)">
+                        <span class="hidden sm:inline text-xs">Next</span>
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                    
+                    <div class="h-6 w-px bg-slate-800 mx-1"></div>
+
+                    <!-- Exit Fullscreen Button -->
+                    <button id="closeFullscreenBtn" class="p-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-xl text-sm transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-compress"></i>
+                        <span class="hidden sm:inline font-medium text-xs">Exit Fullscreen</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fullscreen Rich Formatting Toolbar -->
+            <div class="px-6 py-2.5 border-b border-slate-800 bg-slate-950/50 flex flex-wrap items-center gap-2 text-sm">
+                <button class="fs-format-btn p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" data-cmd="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                <button class="fs-format-btn p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" data-cmd="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                <button class="fs-format-btn p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" data-cmd="underline" title="Underline"><i class="fa-solid fa-underline"></i></button>
+                <div class="h-5 w-px bg-slate-800 my-auto mx-1"></div>
+                <button class="fs-format-btn p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" data-cmd="insertUnorderedList" title="Bullet List"><i class="fa-solid fa-list-ul"></i></button>
+                <button class="fs-format-btn p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" data-cmd="insertOrderedList" title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
+                <div class="h-5 w-px bg-slate-800 my-auto mx-1"></div>
+                
+                <label class="p-2 rounded-lg hover:bg-slate-800 text-sky-400 hover:text-sky-300 cursor-pointer flex items-center gap-1.5" title="Upload Image File">
+                    <i class="fa-solid fa-image"></i>
+                    <span class="text-xs font-medium">Add Image</span>
+                    <input type="file" accept="image/*" id="fsFileInput" class="hidden" multiple>
+                </label>
+                <button id="fsUrlBtn" class="p-2 rounded-lg hover:bg-slate-800 text-sky-400 hover:text-sky-300 flex items-center gap-1.5" title="Add Image Link">
+                    <i class="fa-solid fa-link"></i>
+                    <span class="text-xs font-medium">Embed URL</span>
+                </button>
+            </div>
+
+            <!-- Fullscreen Main Body -->
+            <div class="flex-1 p-6 sm:p-8 overflow-y-auto flex flex-col space-y-6">
+                <!-- Rich Content -->
+                <div id="fsEditable" class="editable-content flex-1 text-slate-100 text-base leading-relaxed focus:outline-none min-h-[250px]" contenteditable="true" data-placeholder="Type text or drag & drop images here in full screen view..."></div>
+                
+                <!-- Fullscreen Image Gallery -->
+                <div id="fsGallery" class="image-gallery grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-800"></div>
+            </div>
         </div>
-    </main>
+    </div>
 
     <!-- Modal for External Image URL Insertion -->
     <div id="urlModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -155,16 +256,15 @@
         </div>
     </div>
 
-    <!-- Notification Toast System -->
+    <!-- Toast Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
     <script>
         // Core State
-        let workspaceBoxes = [];
         let activeBoxForUrlModal = null;
+        let currentFullscreenBoxId = null;
 
         // DOM Element Selectors
-        const mainCanvas = document.getElementById('mainCanvas');
         const workspaceGrid = document.getElementById('workspaceGrid');
         const emptyState = document.getElementById('emptyState');
         const addBlockBtn = document.getElementById('addBlockBtn');
@@ -175,7 +275,25 @@
         const importDataBtn = document.getElementById('importDataBtn');
         const importJsonInput = document.getElementById('importJsonInput');
 
-        // Modal Elements
+        // Drawer Selectors
+        const blockDrawer = document.getElementById('blockDrawer');
+        const toggleDrawerBtn = document.getElementById('toggleDrawerBtn');
+        const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+        const drawerBlockList = document.getElementById('drawerBlockList');
+
+        // Fullscreen Modal Selectors
+        const fullscreenModal = document.getElementById('fullscreenModal');
+        const closeFullscreenBtn = document.getElementById('closeFullscreenBtn');
+        const fsBlockTitle = document.getElementById('fsBlockTitle');
+        const fsEditable = document.getElementById('fsEditable');
+        const fsGallery = document.getElementById('fsGallery');
+        const fsFileInput = document.getElementById('fsFileInput');
+        const fsUrlBtn = document.getElementById('fsUrlBtn');
+        const fsPrevBtn = document.getElementById('fsPrevBtn');
+        const fsNextBtn = document.getElementById('fsNextBtn');
+        const fsBlockIndicator = document.getElementById('fsBlockIndicator');
+
+        // URL Modal Elements
         const urlModal = document.getElementById('urlModal');
         const imageUrlInput = document.getElementById('imageUrlInput');
         const closeUrlModalBtn = document.getElementById('closeUrlModalBtn');
@@ -198,7 +316,6 @@
 
             toastContainer.appendChild(toast);
             
-            // Animate in
             requestAnimationFrame(() => {
                 toast.classList.remove('translate-y-2', 'opacity-0');
             });
@@ -208,6 +325,14 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
+
+        // Toggle Drawer Sidebar
+        toggleDrawerBtn.addEventListener('click', () => {
+            blockDrawer.classList.toggle('-ml-80');
+        });
+        closeDrawerBtn.addEventListener('click', () => {
+            blockDrawer.classList.add('-ml-80');
+        });
 
         function createWorkspaceBox(data = {}) {
             const id = data.id || 'box_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
@@ -227,6 +352,9 @@
                         <input type="text" value="${title}" class="box-title bg-transparent font-semibold text-slate-200 text-sm focus:outline-none focus:border-b focus:border-sky-500 w-full px-1 truncate" placeholder="Box Title...">
                     </div>
                     <div class="flex items-center space-x-1 shrink-0">
+                        <button class="fullscreen-btn text-slate-400 hover:text-sky-400 p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors" title="Full Screen View">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
                         <button class="minimize-btn text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors" title="Toggle Collapse">
                             <i class="fa-solid fa-chevron-up text-xs transition-transform duration-200"></i>
                         </button>
@@ -249,7 +377,6 @@
                     <button class="format-btn p-1.5 rounded hover:bg-slate-700/60 text-slate-300" data-cmd="insertOrderedList" title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
                     <div class="h-4 w-px bg-slate-700 my-auto mx-0.5"></div>
                     
-                    <!-- Image Insertion Actions -->
                     <label class="p-1.5 rounded hover:bg-slate-700/60 text-sky-400 hover:text-sky-300 cursor-pointer flex items-center gap-1" title="Upload Image File">
                         <i class="fa-solid fa-image"></i>
                         <input type="file" accept="image/*" class="image-file-input hidden" multiple>
@@ -259,41 +386,33 @@
                     </button>
                 </div>
 
-                <!-- Box Content Area (Drop Zone & Text Editor) -->
+                <!-- Box Content Area -->
                 <div class="box-body flex-1 p-4 flex flex-col space-y-4 overflow-y-auto relative min-h-[180px]">
-                    
-                    <!-- Editable Rich Text Space -->
                     <div class="editable-content flex-1 text-slate-200 text-sm leading-relaxed focus:outline-none min-h-[100px]" contenteditable="true" data-placeholder="Type text or drag & drop images here...">
                         ${textContent}
                     </div>
 
-                    <!-- Gallery / Image Container inside box -->
-                    <div class="image-gallery grid grid-cols-2 gap-2 mt-2">
-                        <!-- Dynamically appended imported images -->
-                    </div>
+                    <div class="image-gallery grid grid-cols-2 gap-2 mt-2"></div>
 
-                    <!-- Drag & Drop Overlay Indicator -->
                     <div class="drop-overlay absolute inset-0 bg-sky-900/40 border-2 border-dashed border-sky-400 rounded-b-2xl flex flex-col items-center justify-center backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-150">
                         <i class="fa-solid fa-file-image text-3xl text-sky-300 mb-1"></i>
                         <span class="text-xs font-medium text-sky-200">Drop images into box</span>
                     </div>
                 </div>
 
-                <!-- Footer Resize handle indicator -->
+                <!-- Footer -->
                 <div class="px-3 py-1 bg-slate-900/40 border-t border-slate-800/80 flex justify-between items-center text-[10px] text-slate-500 select-none">
                     <span>Editable Workspace</span>
                     <i class="fa-solid fa-grip-lines-diagonal text-slate-600"></i>
                 </div>
             `;
 
-            // Append initial images if restored from storage
             const gallery = card.querySelector('.image-gallery');
             images.forEach(imgSrc => appendImageToGallery(gallery, imgSrc));
 
-            // Attach Box Internal Event Listeners
             attachBoxEventListeners(card);
-
             workspaceGrid.prepend(card);
+
             updateWorkspaceState();
             return card;
         }
@@ -306,38 +425,35 @@
             const deleteBtn = card.querySelector('.delete-btn');
             const duplicateBtn = card.querySelector('.duplicate-btn');
             const minimizeBtn = card.querySelector('.minimize-btn');
+            const fullscreenBtn = card.querySelector('.fullscreen-btn');
             const boxBody = card.querySelector('.box-body');
             const dropOverlay = card.querySelector('.drop-overlay');
             const formatBtns = card.querySelectorAll('.format-btn');
             const boxTitle = card.querySelector('.box-title');
 
-            // Rich Text Format Execution
             formatBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const cmd = btn.getAttribute('data-cmd');
-                    document.execCommand(cmd, false, null);
+                    document.execCommand(btn.getAttribute('data-cmd'), false, null);
                     editable.focus();
                 });
             });
 
-            // Local File Upload
             fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                files.forEach(file => {
+                Array.from(e.target.files).forEach(file => {
                     if (file.type.startsWith('image/')) {
                         const reader = new FileReader();
                         reader.onload = (event) => {
                             appendImageToGallery(gallery, event.target.result);
                             saveStateToLocalStorage();
+                            renderDrawerList();
                         };
                         reader.readAsDataURL(file);
                     }
                 });
-                fileInput.value = ''; // reset
+                fileInput.value = '';
             });
 
-            // Trigger URL Modal for this specific card
             urlImageBtn.addEventListener('click', () => {
                 activeBoxForUrlModal = gallery;
                 imageUrlInput.value = '';
@@ -345,7 +461,10 @@
                 imageUrlInput.focus();
             });
 
-            // Minimize / Collapse
+            fullscreenBtn.addEventListener('click', () => {
+                openFullscreenBox(card.id);
+            });
+
             minimizeBtn.addEventListener('click', () => {
                 const icon = minimizeBtn.querySelector('i');
                 if (boxBody.classList.contains('hidden')) {
@@ -359,7 +478,6 @@
                 }
             });
 
-            // Duplicate Card
             duplicateBtn.addEventListener('click', () => {
                 const currentImages = Array.from(gallery.querySelectorAll('img')).map(img => img.src);
                 createWorkspaceBox({
@@ -370,7 +488,6 @@
                 showToast('Workspace block duplicated', 'success');
             });
 
-            // Delete Card
             deleteBtn.addEventListener('click', () => {
                 card.classList.add('scale-95', 'opacity-0');
                 setTimeout(() => {
@@ -381,7 +498,6 @@
                 }, 150);
             });
 
-            // Drag and Drop File Handlers inside container
             card.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 dropOverlay.classList.remove('opacity-0');
@@ -396,7 +512,6 @@
             card.addEventListener('drop', (e) => {
                 e.preventDefault();
                 dropOverlay.classList.add('opacity-0');
-                
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     Array.from(e.dataTransfer.files).forEach(file => {
                         if (file.type.startsWith('image/')) {
@@ -404,6 +519,7 @@
                             reader.onload = (event) => {
                                 appendImageToGallery(gallery, event.target.result);
                                 saveStateToLocalStorage();
+                                renderDrawerList();
                             };
                             reader.readAsDataURL(file);
                         }
@@ -411,9 +527,14 @@
                 }
             });
 
-            // Auto-save input changes
-            editable.addEventListener('input', saveStateToLocalStorage);
-            boxTitle.addEventListener('input', saveStateToLocalStorage);
+            editable.addEventListener('input', () => {
+                saveStateToLocalStorage();
+                renderDrawerList();
+            });
+            boxTitle.addEventListener('input', () => {
+                saveStateToLocalStorage();
+                renderDrawerList();
+            });
         }
 
         function appendImageToGallery(galleryEl, src) {
@@ -428,10 +549,11 @@
                 </div>
             `;
 
-            // Image action buttons
             wrapper.querySelector('.remove-img-btn').addEventListener('click', () => {
                 wrapper.remove();
                 saveStateToLocalStorage();
+                renderDrawerList();
+                if (currentFullscreenBoxId) syncFullscreenWithCard(document.getElementById(currentFullscreenBoxId));
             });
 
             wrapper.querySelector('.view-img-btn').addEventListener('click', () => {
@@ -442,33 +564,194 @@
             galleryEl.appendChild(wrapper);
         }
 
-        // Keyboard Listener: Enter creates a new space if user isn't actively typing inside an editable field
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const activeEl = document.activeElement;
-                const isEditingText = activeEl && (
-                    activeEl.isContentEditable || 
-                    activeEl.tagName === 'INPUT' || 
-                    activeEl.tagName === 'TEXTAREA'
-                );
+        function openFullscreenBox(boxId) {
+            const card = document.getElementById(boxId);
+            if (!card) return;
 
-                // If NOT currently typing inside an input or contenteditable area, create new box
+            currentFullscreenBoxId = boxId;
+            syncFullscreenWithCard(card);
+
+            fullscreenModal.classList.remove('hidden');
+            updateFullscreenNavigation();
+        }
+
+        function syncFullscreenWithCard(card) {
+            const titleInput = card.querySelector('.box-title');
+            const editableContent = card.querySelector('.editable-content');
+            const gallery = card.querySelector('.image-gallery');
+
+            fsBlockTitle.value = titleInput.value;
+            fsEditable.innerHTML = editableContent.innerHTML;
+
+            fsGallery.innerHTML = '';
+            Array.from(gallery.querySelectorAll('img')).forEach(img => {
+                appendImageToGallery(fsGallery, img.src);
+            });
+        }
+
+        function saveFullscreenToCard() {
+            if (!currentFullscreenBoxId) return;
+            const card = document.getElementById(currentFullscreenBoxId);
+            if (!card) return;
+
+            card.querySelector('.box-title').value = fsBlockTitle.value;
+            card.querySelector('.editable-content').innerHTML = fsEditable.innerHTML;
+
+            const cardGallery = card.querySelector('.image-gallery');
+            cardGallery.innerHTML = '';
+            Array.from(fsGallery.querySelectorAll('img')).forEach(img => {
+                appendImageToGallery(cardGallery, img.src);
+            });
+
+            saveStateToLocalStorage();
+            renderDrawerList();
+        }
+
+        function updateFullscreenNavigation() {
+            const allBoxes = Array.from(workspaceGrid.querySelectorAll('.workspace-box'));
+            const currentIndex = allBoxes.findIndex(box => box.id === currentFullscreenBoxId);
+
+            if (currentIndex === -1) return;
+
+            fsBlockIndicator.textContent = `${currentIndex + 1} / ${allBoxes.length}`;
+            fsPrevBtn.disabled = currentIndex === 0;
+            fsNextBtn.disabled = currentIndex === allBoxes.length - 1;
+
+            fsPrevBtn.classList.toggle('opacity-50', currentIndex === 0);
+            fsNextBtn.classList.toggle('opacity-50', currentIndex === allBoxes.length - 1);
+        }
+
+        fsPrevBtn.addEventListener('click', () => navigateFullscreen(-1));
+        fsNextBtn.addEventListener('click', () => navigateFullscreen(1));
+
+        function navigateFullscreen(direction) {
+            saveFullscreenToCard();
+            const allBoxes = Array.from(workspaceGrid.querySelectorAll('.workspace-box'));
+            const currentIndex = allBoxes.findIndex(box => box.id === currentFullscreenBoxId);
+
+            const targetIndex = currentIndex + direction;
+            if (targetIndex >= 0 && targetIndex < allBoxes.length) {
+                openFullscreenBox(allBoxes[targetIndex].id);
+            }
+        }
+
+        closeFullscreenBtn.addEventListener('click', () => {
+            saveFullscreenToCard();
+            fullscreenModal.classList.add('hidden');
+            currentFullscreenBoxId = null;
+        });
+
+        // Fullscreen Rich Text Execution
+        document.querySelectorAll('.fs-format-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.execCommand(btn.getAttribute('data-cmd'), false, null);
+                fsEditable.focus();
+            });
+        });
+
+        fsBlockTitle.addEventListener('input', saveFullscreenToCard);
+        fsEditable.addEventListener('input', saveFullscreenToCard);
+
+        fsFileInput.addEventListener('change', (e) => {
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        appendImageToGallery(fsGallery, event.target.result);
+                        saveFullscreenToCard();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            fsFileInput.value = '';
+        });
+
+        fsUrlBtn.addEventListener('click', () => {
+            activeBoxForUrlModal = fsGallery;
+            imageUrlInput.value = '';
+            urlModal.classList.remove('hidden');
+            imageUrlInput.focus();
+        });
+
+        function renderDrawerList() {
+            drawerBlockList.innerHTML = '';
+            const boxes = Array.from(workspaceGrid.querySelectorAll('.workspace-box'));
+
+            if (boxes.length === 0) {
+                drawerBlockList.innerHTML = `
+                    <div class="text-center py-8 text-xs text-slate-500">
+                        No blocks available.<br>Create one using Enter or '+' button.
+                    </div>`;
+                return;
+            }
+
+            boxes.forEach((box, idx) => {
+                const title = box.querySelector('.box-title').value || `Block ${idx + 1}`;
+                const rawText = box.querySelector('.editable-content').innerText.trim().slice(0, 45) || 'Empty block content...';
+                const imgCount = box.querySelectorAll('.image-gallery img').length;
+
+                const item = document.createElement('div');
+                item.className = "p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-sky-500/50 cursor-pointer transition-all space-y-1.5 group";
+                
+                item.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-xs text-slate-200 group-hover:text-sky-400 truncate">${title}</span>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            ${imgCount > 0 ? `<span class="text-[10px] text-sky-400 bg-sky-950 px-1.5 py-0.5 rounded border border-sky-800"><i class="fa-solid fa-image"></i> ${imgCount}</span>` : ''}
+                            <button class="open-fs-direct text-slate-400 hover:text-white p-1" title="Open Fullscreen"><i class="fa-solid fa-expand text-[10px]"></i></button>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 line-clamp-1">${rawText}</p>
+                `;
+
+                // Scroll To Block
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.open-fs-direct')) return;
+                    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    box.classList.add('block-highlight');
+                    setTimeout(() => box.classList.remove('block-highlight'), 1200);
+                });
+
+                item.querySelector('.open-fs-direct').addEventListener('click', () => {
+                    openFullscreenBox(box.id);
+                });
+
+                drawerBlockList.appendChild(item);
+            });
+        }
+
+        // Global Keydown Handler
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!fullscreenModal.classList.contains('hidden')) {
+                    saveFullscreenToCard();
+                    fullscreenModal.classList.add('hidden');
+                    currentFullscreenBoxId = null;
+                } else if (document.activeElement) {
+                    document.activeElement.blur();
+                }
+            } else if (!fullscreenModal.classList.contains('hidden')) {
+                const active = document.activeElement;
+                const isEditingText = active && (active.isContentEditable || active.tagName === 'INPUT');
+                if (!isEditingText) {
+                    if (e.key === 'ArrowLeft') navigateFullscreen(-1);
+                    if (e.key === 'ArrowRight') navigateFullscreen(1);
+                }
+            } else if (e.key === 'Enter') {
+                const activeEl = document.activeElement;
+                const isEditingText = activeEl && (activeEl.isContentEditable || activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+
                 if (!isEditingText) {
                     e.preventDefault();
                     const newCard = createWorkspaceBox();
                     showToast('New blank canvas box created!', 'success');
                     
-                    // Automatically focus title of new box
                     const titleInput = newCard.querySelector('.box-title');
                     if (titleInput) {
                         titleInput.focus();
                         titleInput.select();
                     }
-                }
-            } else if (e.key === 'Escape') {
-                // Blur active element on ESC
-                if (document.activeElement) {
-                    document.activeElement.blur();
                 }
             }
         });
@@ -484,7 +767,6 @@
             showToast('New blank canvas box created!', 'success');
         });
 
-        // Clear All Workspace
         clearAllBtn.addEventListener('click', () => {
             const boxes = workspaceGrid.querySelectorAll('.workspace-box');
             if (boxes.length === 0) return;
@@ -497,7 +779,7 @@
             }
         });
 
-        // URL Modal Event Handlers
+        // Modal Handlers
         closeUrlModalBtn.addEventListener('click', () => urlModal.classList.add('hidden'));
         cancelUrlBtn.addEventListener('click', () => urlModal.classList.add('hidden'));
         
@@ -506,6 +788,8 @@
             if (url && activeBoxForUrlModal) {
                 appendImageToGallery(activeBoxForUrlModal, url);
                 saveStateToLocalStorage();
+                renderDrawerList();
+                if (currentFullscreenBoxId) saveFullscreenToCard();
                 urlModal.classList.add('hidden');
                 showToast('Image attached from link', 'success');
             }
@@ -520,6 +804,7 @@
             } else {
                 emptyState.classList.add('hidden');
             }
+            renderDrawerList();
         }
 
         function saveStateToLocalStorage() {
