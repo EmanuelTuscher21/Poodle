@@ -152,48 +152,106 @@
 
   <!-- CLOUD SYNC CONFIGURATION MODAL -->
   <div id="cloudModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="modal-box bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-900 border border-slate-200">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+    <div class="modal-box bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 text-slate-900 border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 flex-shrink-0">
         <div class="flex items-center gap-2 text-sky-600">
           <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
-          <h3 class="font-bold text-lg text-slate-800">Global Cloud Hub Sync</h3>
+          <h3 class="font-bold text-lg text-slate-800">Global Cloud Hub Setup</h3>
         </div>
         <button onclick="closeCloudModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div class="space-y-4 pt-3 text-sm text-slate-600">
-        <p>Because static hosts like GitHub Pages do not automatically share LocalStorage across devices, connect to a free <b>JSONBin.io</b> Bin ID to share public posts live across all users worldwide!</p>
-
-        <div class="bg-sky-50 p-3 rounded-xl border border-sky-200 text-xs text-sky-900 space-y-1">
-          <div class="font-bold flex items-center gap-1">
-            <i data-lucide="info" class="w-4 h-4 text-sky-600"></i> How to set up cross-device sharing:
+      <!-- Modal Body (Scrollable) -->
+      <div class="space-y-5 py-4 overflow-y-auto custom-scrollbar flex-1 text-sm text-slate-600">
+        <!-- Interactive Step Indicator -->
+        <div class="bg-sky-50 p-4 rounded-xl border border-sky-200">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-bold text-sky-900 flex items-center gap-1.5 text-base">
+              <i data-lucide="book-open" class="w-5 h-5 text-sky-600"></i>
+              Step-by-Step Setup Guide
+            </h4>
+            <span class="text-xs bg-sky-200 text-sky-800 font-bold px-2.5 py-0.5 rounded-full">3 Easy Steps</span>
           </div>
-          <ol class="list-decimal pl-4 space-y-1">
-            <li>Create a free account at <a href="https://jsonbin.io" target="_blank" class="underline text-sky-700 font-semibold">JSONBin.io</a>.</li>
-            <li>Create a Public Bin with content `[]` and copy its Bin ID.</li>
-            <li>Paste your Bin ID below and click <b>Connect Bin</b>.</li>
-          </ol>
+
+          <!-- Tabs / Steps Navigation -->
+          <div class="grid grid-cols-3 gap-2 text-center text-xs font-semibold mb-4">
+            <button onclick="showCloudStep(1)" id="stepTab1" class="py-2 px-3 rounded-lg bg-sky-600 text-white shadow-sm transition">1. Register Account</button>
+            <button onclick="showCloudStep(2)" id="stepTab2" class="py-2 px-3 rounded-lg bg-white border border-sky-200 text-sky-800 hover:bg-sky-100 transition">2. Master Key & Bin</button>
+            <button onclick="showCloudStep(3)" id="stepTab3" class="py-2 px-3 rounded-lg bg-white border border-sky-200 text-sky-800 hover:bg-sky-100 transition">3. Connect & Sync</button>
+          </div>
+
+          <!-- Step 1 Content -->
+          <div id="stepContent1" class="space-y-2 text-xs text-sky-950">
+            <p class="font-semibold text-slate-800 text-sm">Step 1: Sign up on JSONBin.io</p>
+            <p>JSONBin.io is a free cloud database that holds public posts so users across GitHub Pages or different computers can view them live.</p>
+            <ol class="list-decimal pl-5 space-y-1 text-slate-700">
+              <li>Open <a href="https://jsonbin.io" target="_blank" class="underline font-bold text-sky-700 hover:text-sky-900 inline-flex items-center gap-0.5">JSONBin.io <i data-lucide="external-link" class="w-3 h-3"></i></a> in a new tab.</li>
+              <li>Click <b>Sign Up</b> and create a free account.</li>
+            </ol>
+            <button onclick="showCloudStep(2)" class="mt-2 bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1">
+              <span>Next: Get Keys & Bin ID</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- Step 2 Content -->
+          <div id="stepContent2" class="hidden space-y-2 text-xs text-sky-950">
+            <p class="font-semibold text-slate-800 text-sm">Step 2: Get Master Key & Create Bin</p>
+            <ol class="list-decimal pl-5 space-y-1.5 text-slate-700">
+              <li>In JSONBin, go to <b>API Keys</b> section and copy your <b>Master Key</b> (starts with <code>$2a$10$...</code>).</li>
+              <li>Go to <b>Bins</b> &rarr; Click <b>Create Bin</b>.</li>
+              <li>Paste an empty JSON array: <code>[]</code> into the editor and save it.</li>
+              <li>Copy the <b>Bin ID</b> from the URL or Bin settings (e.g. <code>65f12345a1b2c3d4e5f67890</code>).</li>
+            </ol>
+            <div class="flex gap-2 mt-2">
+              <button onclick="showCloudStep(1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg font-bold text-xs transition">Back</button>
+              <button onclick="showCloudStep(3)" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1">
+                <span>Next: Save & Connect</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 3 Content -->
+          <div id="stepContent3" class="hidden space-y-2 text-xs text-sky-950">
+            <p class="font-semibold text-slate-800 text-sm">Step 3: Paste Keys Below & Save</p>
+            <p class="text-slate-700">Enter your copied <b>Bin ID</b> and <b>Master Key</b> into the form fields below. Click <b>Save Settings</b>, then test by clicking <b>Push My Public Posts to Cloud</b>!</p>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">JSONBin.io Bin ID</label>
-          <input id="jsonbinIdInput" type="text" placeholder="e.g. 65f12345a1b2c3d4e5f67890" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-sky-500">
+        <!-- FORM INPUTS -->
+        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <span>JSONBin.io Bin ID</span>
+              <span class="text-red-500">*</span>
+            </label>
+            <input id="jsonbinIdInput" type="text" placeholder="e.g. 65f12345a1b2c3d4e5f67890" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-sky-500 font-mono">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <span>JSONBin Master Key ($2a$10$...)</span>
+              <span class="text-slate-400 font-normal">(Required to read/write bins)</span>
+            </label>
+            <input id="jsonbinApiKeyInput" type="password" placeholder="e.g. $2a$10$..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-sky-500 font-mono">
+          </div>
         </div>
+      </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">JSONBin Master Key (Optional for private bins)</label>
-          <input id="jsonbinApiKeyInput" type="password" placeholder="e.g. $2a$10$..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-sky-500">
-        </div>
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-200 flex items-center justify-between gap-2 flex-shrink-0">
+        <button onclick="publishToGlobalCloud()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+          <span>Push My Public Posts to Cloud</span>
+        </button>
 
-        <div class="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
-          <button onclick="publishToGlobalCloud()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-            <span>Push My Public Posts to Cloud</span>
-          </button>
-
-          <button onclick="saveCloudConfig()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
+        <div class="flex gap-2">
+          <button onclick="closeCloudModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">Cancel</button>
+          <button onclick="saveCloudConfig()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm">
             Save Settings
           </button>
         </div>
@@ -692,11 +750,26 @@
     function openCloudModal() {
       document.getElementById('jsonbinIdInput').value = jsonbinId;
       document.getElementById('jsonbinApiKeyInput').value = jsonbinApiKey;
+      showCloudStep(1);
       document.getElementById('cloudModal').classList.remove('hidden');
     }
 
     function closeCloudModal() {
       document.getElementById('cloudModal').classList.add('hidden');
+    }
+
+    function showCloudStep(stepNum) {
+      [1, 2, 3].forEach(n => {
+        const tab = document.getElementById(`stepTab${n}`);
+        const content = document.getElementById(`stepContent${n}`);
+        if (n === stepNum) {
+          tab.className = 'py-2 px-3 rounded-lg bg-sky-600 text-white shadow-sm transition';
+          content.classList.remove('hidden');
+        } else {
+          tab.className = 'py-2 px-3 rounded-lg bg-white border border-sky-200 text-sky-800 hover:bg-sky-100 transition';
+          content.classList.add('hidden');
+        }
+      });
     }
 
     function saveCloudConfig() {
@@ -740,7 +813,6 @@
       }
 
       try {
-        // Fetch existing cloud blocks to merge
         let headers = { 'Content-Type': 'application/json' };
         if (jsonbinApiKey) headers['X-Master-Key'] = jsonbinApiKey;
 
@@ -751,7 +823,6 @@
           existingCloudBlocks = Array.isArray(data.record) ? data.record : [];
         }
 
-        // Merge local public blocks with existing cloud blocks (deduplicating by block ID)
         const combined = [...localPublicBlocks];
         existingCloudBlocks.forEach(cb => {
           if (!combined.some(lb => lb.id === cb.id)) {
@@ -759,7 +830,6 @@
           }
         });
 
-        // Put merged list back to JSONBin
         const putRes = await fetch(`https://api.jsonbin.io/v3/b/${jsonbinId}`, {
           method: 'PUT',
           headers: headers,
@@ -801,14 +871,14 @@
       
       let posts = [];
 
-      // 1. Gather local public posts across all users saved in LocalStorage
+      // 1. Local Public Posts
       Object.keys(users).forEach(u => {
         (users[u].blocks || []).forEach(b => {
           if (b.isPublic) posts.push({ ...b, author: u, source: 'Local' });
         });
       });
 
-      // 2. If JSONBin Cloud is configured, fetch global posts
+      // 2. JSONBin Global Cloud Posts
       if (jsonbinId) {
         try {
           let headers = {};
@@ -820,7 +890,6 @@
             const cloudPosts = Array.isArray(cloudData.record) ? cloudData.record : [];
             
             cloudPosts.forEach(cp => {
-              // Avoid duplicate entries if already present locally
               if (!posts.some(p => p.id === cp.id)) {
                 posts.push({ ...cp, source: 'Cloud' });
               }
