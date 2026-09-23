@@ -28,20 +28,28 @@
     /* BACKGROUND THEMES */
     body.theme-light { background-color: #f8fafc; color: #0f172a; }
     body.theme-dark { background-color: #0f172a; color: #f8fafc; }
-    body.theme-dark .bg-white { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
-    body.theme-dark .bg-slate-50 { background-color: #0f172a !important; border-color: #334155 !important; color: #f8fafc !important; }
-    body.theme-dark input, body.theme-dark [contenteditable="true"] { color: #f8fafc !important; }
+    body.theme-dark .workspace-card { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
+    body.theme-dark .workspace-card input, 
+    body.theme-dark .workspace-card [contenteditable="true"] { color: #f8fafc !important; }
+    body.theme-dark .workspace-card .card-header { background-color: #0f172a !important; border-color: #334155 !important; }
+    
     body.theme-blue { background-color: #eff6ff; color: #1e3a8a; }
     body.theme-green { background-color: #f0fdf4; color: #14532d; }
     body.theme-yellow { background-color: #fefce8; color: #713f12; }
     body.theme-red { background-color: #fef2f2; color: #881337; }
+
+    /* ENSURE ALL MODAL INPUTS ALWAYS HAVE CLEAR DARK TEXT ON LIGHT BACKGROUND */
+    .modal-box input, .modal-box select {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
   </style>
 </head>
 <body id="appBody" class="theme-light min-h-screen flex flex-col font-sans transition-colors duration-200">
 
   <!-- AUTHENTICATION OVERLAY (LOGIN / REGISTER) -->
   <div id="authOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200">
+    <div class="modal-box bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200 text-slate-900">
       <div class="flex items-center gap-3 mb-6">
         <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-md">
           <i data-lucide="dog" class="w-7 h-7"></i>
@@ -136,7 +144,7 @@
 
   <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-5">
+    <div class="modal-box bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-5 text-slate-900">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
         <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
           <i data-lucide="settings" class="w-5 h-5 text-indigo-600"></i> Settings
@@ -162,7 +170,7 @@
 
   <!-- BROWSE / SEARCH MODAL -->
   <div id="browseModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+    <div class="modal-box bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] text-slate-900">
       <div class="p-4 border-b border-slate-200 flex items-center gap-3">
         <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
         <input id="searchInput" type="text" placeholder="Search public posts..." class="w-full text-sm outline-none text-slate-800 placeholder-slate-400">
@@ -177,8 +185,8 @@
     </div>
   </div>
 
-  <!-- FULLSCREEN FOCUS MODAL (WITH COMPLETE FORMATTING TOOLBAR) -->
-  <div id="fullscreenModal" class="fixed inset-0 bg-white z-50 hidden flex flex-col p-6">
+  <!-- FULLSCREEN FOCUS MODAL -->
+  <div id="fullscreenModal" class="fixed inset-0 bg-white z-50 hidden flex flex-col p-6 text-slate-900">
     <div class="flex items-center justify-between pb-4 border-b border-slate-200">
       <div class="flex items-center gap-3">
         <button id="prevFsBtn" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition">
@@ -196,14 +204,13 @@
     </div>
 
     <!-- FULLSCREEN RICH-TEXT FORMATTING TOOLBAR -->
-    <div class="py-2.5 px-4 bg-slate-100/80 border-b border-slate-200 flex items-center gap-2 text-sm text-slate-700 flex-wrap my-2 rounded-xl">
+    <div class="py-2.5 px-4 bg-slate-100 border-b border-slate-200 flex items-center gap-2 text-sm text-slate-700 flex-wrap my-2 rounded-xl">
       <button onclick="formatText('bold')" class="px-2 py-1 hover:bg-slate-200 rounded font-bold" title="Bold">B</button>
       <button onclick="formatText('italic')" class="px-2 py-1 hover:bg-slate-200 rounded italic" title="Italic">I</button>
       <button onclick="formatText('underline')" class="px-2 py-1 hover:bg-slate-200 rounded underline" title="Underline">U</button>
       
       <span class="text-slate-300">|</span>
       
-      <!-- FONT FAMILY -->
       <select onchange="formatText('fontName', this.value)" class="bg-transparent font-medium outline-none cursor-pointer">
         <option value="sans-serif">Sans-Serif</option>
         <option value="serif">Serif</option>
@@ -211,7 +218,6 @@
         <option value="cursive">Cursive</option>
       </select>
 
-      <!-- FONT SIZE (BIGGER CHOICES) -->
       <select onchange="formatText('fontSize', this.value)" class="bg-transparent font-medium outline-none cursor-pointer">
         <option value="3">Medium (16px)</option>
         <option value="4" selected>Large (18px)</option>
@@ -220,7 +226,6 @@
         <option value="7">Huge (48px)</option>
       </select>
 
-      <!-- TEXT COLOR -->
       <input type="color" onchange="formatText('foreColor', this.value)" class="w-6 h-6 rounded cursor-pointer border-none bg-transparent" title="Text Color">
     </div>
 
@@ -233,7 +238,7 @@
 
   <!-- DELETE CONFIRMATION DIALOG -->
   <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full space-y-4">
+    <div class="modal-box bg-white rounded-xl shadow-xl p-6 max-w-sm w-full space-y-4 text-slate-900">
       <div class="flex items-center gap-3 text-red-600">
         <div class="bg-red-100 p-2 rounded-lg">
           <i data-lucide="alert-triangle" class="w-6 h-6"></i>
@@ -252,7 +257,7 @@
     // DATA & AUTH STATE
     let users = JSON.parse(localStorage.getItem('poodle_users')) || {};
     let currentUser = localStorage.getItem('poodle_current_user') || null;
-    let authMode = 'login'; // 'login' or 'register'
+    let authMode = 'login';
     let blocks = [];
     let currentTheme = localStorage.getItem('poodle_theme') || 'light';
     let deleteTargetId = null;
@@ -391,11 +396,11 @@
 
       blocks.forEach((block, index) => {
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col overflow-hidden';
+        card.className = 'workspace-card bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col overflow-hidden';
         
         card.innerHTML = `
           <!-- CARD HEADER -->
-          <div class="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between gap-2">
+          <div class="card-header bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between gap-2">
             <input type="text" value="${escapeHtml(block.title)}" onchange="updateTitle('${block.id}', this.value)" class="bg-transparent font-bold text-slate-800 outline-none w-full text-base focus:border-b focus:border-indigo-500">
             
             <div class="flex items-center gap-1">
@@ -438,7 +443,7 @@
             <input type="color" onchange="formatText('foreColor', this.value)" class="w-5 h-5 rounded cursor-pointer border-none bg-transparent" title="Text Color">
           </div>
 
-          <!-- EDITABLE CONTENT (LARGER TYPOGRAPHY) -->
+          <!-- EDITABLE CONTENT -->
           <div class="p-4 flex-1 flex flex-col space-y-3">
             <div contenteditable="true" oninput="updateContent('${block.id}', this.innerHTML)" class="outline-none text-slate-700 text-base leading-relaxed min-h-[100px] flex-1">${block.content}</div>
 
@@ -542,7 +547,7 @@
     document.getElementById('settingsBtn').onclick = () => settingsModal.classList.remove('hidden');
     document.getElementById('closeSettingsBtn').onclick = () => settingsModal.classList.add('hidden');
 
-    // BROWSE & SEARCH MODAL (PUBLIC POSTS ACROSS ALL USERS)
+    // BROWSE & SEARCH MODAL
     const browseModal = document.getElementById('browseModal');
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
