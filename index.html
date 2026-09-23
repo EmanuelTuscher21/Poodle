@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Poodle Workspace</title>
+  <title>Poodle Workspace - Modern Workspace with Global Cloud Sync</title>
+  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
   <style>
     .glass {
       background: rgba(255, 255, 255, 0.85);
@@ -25,7 +28,7 @@
       background: #94a3b8;
     }
 
-    /* BACKGROUND THEMES */
+    /* THEME STYLES */
     body.theme-light { background-color: #f8fafc; color: #0f172a; }
     body.theme-dark { background-color: #0f172a; color: #f8fafc; }
     body.theme-dark .workspace-card { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
@@ -38,8 +41,8 @@
     body.theme-yellow { background-color: #fefce8; color: #713f12; }
     body.theme-red { background-color: #fef2f2; color: #881337; }
 
-    /* ENSURE ALL MODAL INPUTS ALWAYS HAVE CLEAR DARK TEXT ON LIGHT BACKGROUND */
-    .modal-box input, .modal-box select {
+    /* Modal Form Inputs */
+    .modal-box input, .modal-box select, .modal-box textarea {
       background-color: #ffffff !important;
       color: #0f172a !important;
     }
@@ -56,7 +59,7 @@
         </div>
         <div>
           <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Poodle Workspace</h2>
-          <p class="text-xs text-slate-500">Sign in or create an account to continue</p>
+          <p class="text-xs text-slate-500">Sign in or create an account to start creating</p>
         </div>
       </div>
 
@@ -79,55 +82,60 @@
         
         <p id="authError" class="text-xs text-red-500 hidden font-medium"></p>
 
-        <button id="authSubmitBtn" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg text-sm font-semibold transition shadow-md">
-          Log In
+        <button id="authSubmitBtn" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg text-sm font-semibold transition shadow-md flex items-center justify-center gap-2">
+          <span>Log In</span>
         </button>
       </form>
     </div>
   </div>
 
   <!-- TOP HEADER / NAVBAR -->
-  <header class="sticky top-0 z-30 glass border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm">
+  <header class="sticky top-0 z-30 glass border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm flex-wrap gap-2">
     <div class="flex items-center gap-3">
       <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md">
         <i data-lucide="dog" class="w-6 h-6"></i>
       </div>
       <div>
-        <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+        <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
           Poodle Workspace
         </h1>
-        <p class="text-xs text-slate-500">Logged in as: <span id="currentUserLabel" class="font-bold text-indigo-600">Guest</span></p>
+        <p class="text-xs text-slate-500">User: <span id="currentUserLabel" class="font-bold text-indigo-600">Guest</span></p>
       </div>
     </div>
 
     <!-- ACTION BUTTONS -->
-    <div class="flex items-center gap-2">
-      <button id="addBlockBtn" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow-sm">
+    <div class="flex items-center gap-2 flex-wrap">
+      <button id="addBlockBtn" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition shadow-sm">
         <i data-lucide="plus" class="w-4 h-4"></i>
         <span>Add Block</span>
       </button>
 
-      <button id="browseBtn" class="flex items-center gap-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-lg font-medium text-sm transition">
-        <i data-lucide="search" class="w-4 h-4"></i>
+      <button id="browseBtn" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition shadow-sm">
+        <i data-lucide="globe" class="w-4 h-4"></i>
         <span>Browse Public</span>
       </button>
 
-      <button id="settingsBtn" class="p-2 text-slate-600 hover:bg-slate-200 rounded-lg transition" title="Settings">
+      <button id="cloudSyncBtn" onclick="openCloudModal()" class="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition shadow-sm" title="Cloud Sync Settings">
+        <i data-lucide="cloud" class="w-4 h-4"></i>
+        <span id="cloudStatusBadge">Cloud Hub</span>
+      </button>
+
+      <button id="settingsBtn" class="p-2 text-slate-600 hover:bg-slate-200/60 rounded-lg transition" title="Settings">
         <i data-lucide="settings" class="w-5 h-5"></i>
       </button>
 
-      <button id="exportBtn" class="p-2 text-slate-600 hover:bg-slate-200 rounded-lg transition" title="Export Workspace">
+      <button id="exportBtn" class="p-2 text-slate-600 hover:bg-slate-200/60 rounded-lg transition" title="Export Workspace">
         <i data-lucide="download" class="w-5 h-5"></i>
       </button>
       
-      <button onclick="logout()" class="p-2 text-slate-600 hover:bg-slate-200 rounded-lg transition" title="Log Out">
+      <button onclick="logout()" class="p-2 text-slate-600 hover:bg-slate-200/60 rounded-lg transition" title="Log Out">
         <i data-lucide="log-out" class="w-5 h-5"></i>
       </button>
     </div>
   </header>
 
   <!-- MAIN CANVAS AREA -->
-  <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+  <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
     <div id="workspaceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <!-- Blocks render dynamically -->
     </div>
@@ -138,9 +146,60 @@
         <i data-lucide="layout" class="w-10 h-10"></i>
       </div>
       <h3 class="text-lg font-semibold text-slate-700">Your workspace is empty</h3>
-      <p class="text-sm text-slate-500 max-w-sm mt-1">Press <kbd class="px-2 py-0.5 bg-white border rounded text-xs shadow-sm">Enter</kbd> or click <b>Add Block</b> to start.</p>
+      <p class="text-sm text-slate-500 max-w-sm mt-1">Click <b>Add Block</b> or press <kbd class="px-2 py-0.5 bg-white border rounded text-xs shadow-sm">Enter</kbd> to create a block.</p>
     </div>
   </main>
+
+  <!-- CLOUD SYNC CONFIGURATION MODAL -->
+  <div id="cloudModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-box bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 text-slate-900 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div class="flex items-center gap-2 text-sky-600">
+          <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
+          <h3 class="font-bold text-lg text-slate-800">Global Cloud Hub Sync</h3>
+        </div>
+        <button onclick="closeCloudModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 pt-3 text-sm text-slate-600">
+        <p>Because static hosts like GitHub Pages do not automatically share LocalStorage across devices, connect to a free <b>JSONBin.io</b> Bin ID to share public posts live across all users worldwide!</p>
+
+        <div class="bg-sky-50 p-3 rounded-xl border border-sky-200 text-xs text-sky-900 space-y-1">
+          <div class="font-bold flex items-center gap-1">
+            <i data-lucide="info" class="w-4 h-4 text-sky-600"></i> How to set up cross-device sharing:
+          </div>
+          <ol class="list-decimal pl-4 space-y-1">
+            <li>Create a free account at <a href="https://jsonbin.io" target="_blank" class="underline text-sky-700 font-semibold">JSONBin.io</a>.</li>
+            <li>Create a Public Bin with content `[]` and copy its Bin ID.</li>
+            <li>Paste your Bin ID below and click <b>Connect Bin</b>.</li>
+          </ol>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">JSONBin.io Bin ID</label>
+          <input id="jsonbinIdInput" type="text" placeholder="e.g. 65f12345a1b2c3d4e5f67890" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-sky-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">JSONBin Master Key (Optional for private bins)</label>
+          <input id="jsonbinApiKeyInput" type="password" placeholder="e.g. $2a$10$..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-sky-500">
+        </div>
+
+        <div class="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
+          <button onclick="publishToGlobalCloud()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>Push My Public Posts to Cloud</span>
+          </button>
+
+          <button onclick="saveCloudConfig()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- SETTINGS MODAL -->
   <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -165,22 +224,44 @@
           <button onclick="setTheme('red')" class="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs font-semibold hover:border-indigo-500 flex flex-col items-center gap-1">Red</button>
         </div>
       </div>
+
+      <!-- FILE BUNDLE IMPORT/EXPORT FOR OFFLINE SYNC -->
+      <div class="pt-3 border-t border-slate-200">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Shared Public Post Bundle (.json)</label>
+        <p class="text-xs text-slate-500 mb-2">Import/Export public posts manually to share with teammates using a JSON file.</p>
+        <div class="flex items-center gap-2">
+          <button onclick="exportPublicBundle()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center justify-center gap-1">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Export Public Bundle
+          </button>
+          <label class="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg border border-indigo-200 transition text-center cursor-pointer flex items-center justify-center gap-1">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import Bundle
+            <input type="file" accept=".json" class="hidden" onchange="importPublicBundle(event)">
+          </label>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- BROWSE / SEARCH MODAL -->
   <div id="browseModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="modal-box bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] text-slate-900">
-      <div class="p-4 border-b border-slate-200 flex items-center gap-3">
+    <div class="modal-box bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-900 border border-slate-200">
+      <div class="p-4 border-b border-slate-200 flex items-center gap-3 bg-slate-50">
         <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
-        <input id="searchInput" type="text" placeholder="Search public posts..." class="w-full text-sm outline-none text-slate-800 placeholder-slate-400">
+        <input id="searchInput" type="text" placeholder="Search public posts across local storage & global cloud..." class="w-full text-sm outline-none text-slate-800 placeholder-slate-400 bg-transparent">
         <button id="closeBrowseBtn" class="p-1 text-slate-400 hover:text-slate-600 rounded">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
+      <div class="px-4 py-2 bg-indigo-50/50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+        <span id="browseSourceInfo">Loading public posts...</span>
+        <button onclick="fetchPublicPosts()" class="text-indigo-600 hover:underline font-bold flex items-center gap-1">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh Data
+        </button>
+      </div>
+
       <div id="searchResults" class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-3">
-        <!-- Search results dynamically -->
+        <!-- Search results dynamically loaded -->
       </div>
     </div>
   </div>
@@ -195,8 +276,9 @@
             <i data-lucide="globe" class="w-3.5 h-3.5"></i> Public Post
           </span>
           <span id="postAuthorBadge" class="bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full text-xs">@author</span>
+          <span id="postOriginBadge" class="bg-sky-100 text-sky-700 font-semibold px-2 py-0.5 rounded-md text-[10px]">Cloud</span>
         </div>
-        <button id="closeViewPostBtn" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition">
+        <button id="closeViewPostBtn" onclick="closeViewPostModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -214,7 +296,7 @@
         <div class="flex gap-2">
           <button id="importPostBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
             <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-            <span>Import to My Workspace</span>
+            <span>Add to My Workspace</span>
           </button>
           <button onclick="closeViewPostModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
             Close
@@ -293,7 +375,7 @@
   </div>
 
   <script>
-    // DATA & AUTH STATE
+    // DATA & APPLICATION STATE
     let users = JSON.parse(localStorage.getItem('poodle_users')) || {};
     let currentUser = localStorage.getItem('poodle_current_user') || null;
     let authMode = 'login';
@@ -303,10 +385,29 @@
     let currentFsIndex = 0;
     let activeViewedPost = null;
 
-    // INITIALIZE
+    // CLOUD SYNC CONFIGURATION
+    let jsonbinId = localStorage.getItem('poodle_jsonbin_id') || '';
+    let jsonbinApiKey = localStorage.getItem('poodle_jsonbin_key') || '';
+
+    // BROADCAST CHANNEL FOR MULTI-TAB LIVE SYNC
+    const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('poodle_workspace_channel') : null;
+    if (syncChannel) {
+      syncChannel.onmessage = (event) => {
+        if (event.data && event.data.type === 'STATE_UPDATED') {
+          users = JSON.parse(localStorage.getItem('poodle_users')) || {};
+          if (currentUser && users[currentUser]) {
+            blocks = users[currentUser].blocks || [];
+            renderBlocks();
+          }
+        }
+      };
+    }
+
+    // INITIALIZATION
     document.addEventListener('DOMContentLoaded', () => {
       setTheme(currentTheme);
       lucide.createIcons();
+      updateCloudStatusBadge();
 
       if (currentUser && users[currentUser]) {
         showApp();
@@ -314,7 +415,7 @@
         showAuth();
       }
 
-      // Enter key shortcut to add new block
+      // Shortcut: Enter key creates a block if not editing text fields
       document.addEventListener('keydown', (e) => {
         if (currentUser && e.key === 'Enter' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) && !e.target.isContentEditable) {
           e.preventDefault();
@@ -323,7 +424,7 @@
       });
     });
 
-    // AUTH FUNCTIONS
+    // AUTHENTICATION LOGIC
     function showAuth() {
       document.getElementById('authOverlay').classList.remove('hidden');
     }
@@ -390,18 +491,19 @@
       showAuth();
     }
 
-    // THEME SETTER
+    // THEMES
     function setTheme(theme) {
       currentTheme = theme;
       localStorage.setItem('poodle_theme', theme);
       document.getElementById('appBody').className = `theme-${theme} min-h-screen flex flex-col font-sans transition-colors duration-200`;
     }
 
-    // SAVE STATE
+    // STATE PERSISTENCE & BROADCAST
     function saveState() {
       if (currentUser && users[currentUser]) {
         users[currentUser].blocks = blocks;
         localStorage.setItem('poodle_users', JSON.stringify(users));
+        if (syncChannel) syncChannel.postMessage({ type: 'STATE_UPDATED' });
       }
       renderBlocks();
     }
@@ -410,8 +512,8 @@
     function addNewBlock() {
       const newBlock = {
         id: 'block_' + Date.now(),
-        title: 'New Block',
-        content: 'Type your text here...',
+        title: 'New Workspace Block',
+        content: 'Type your ideas here...',
         images: [],
         isPublic: false,
         updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -444,7 +546,7 @@
             <input type="text" value="${escapeHtml(block.title)}" onchange="updateTitle('${block.id}', this.value)" class="bg-transparent font-bold text-slate-800 outline-none w-full text-base focus:border-b focus:border-indigo-500">
             
             <div class="flex items-center gap-1">
-              <button onclick="togglePrivacy('${block.id}')" class="px-2 py-1 text-xs rounded-md font-medium flex items-center gap-1 transition ${block.isPublic ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}">
+              <button onclick="togglePrivacy('${block.id}')" class="px-2 py-1 text-xs rounded-md font-medium flex items-center gap-1 transition ${block.isPublic ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}" title="Toggle Public visibility">
                 <i data-lucide="${block.isPublic ? 'globe' : 'lock'}" class="w-3.5 h-3.5"></i>
                 <span>${block.isPublic ? 'Public' : 'Private'}</span>
               </button>
@@ -502,7 +604,7 @@
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
               <label class="cursor-pointer hover:text-indigo-600 flex items-center gap-1">
                 <i data-lucide="image" class="w-3.5 h-3.5"></i>
-                <span>Import Picture</span>
+                <span>Attach Picture</span>
                 <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload('${block.id}', event)">
               </label>
               <span>${block.updatedAt}</span>
@@ -538,6 +640,7 @@
         if (currentUser && users[currentUser]) {
           users[currentUser].blocks = blocks;
           localStorage.setItem('poodle_users', JSON.stringify(users));
+          if (syncChannel) syncChannel.postMessage({ type: 'STATE_UPDATED' });
         }
       }
     }
@@ -585,67 +688,187 @@
       document.getElementById('deleteModal').classList.add('hidden');
     };
 
-    // SETTINGS MODAL
-    const settingsModal = document.getElementById('settingsModal');
-    document.getElementById('settingsBtn').onclick = () => settingsModal.classList.remove('hidden');
-    document.getElementById('closeSettingsBtn').onclick = () => settingsModal.classList.add('hidden');
+    // GLOBAL CLOUD HUB FUNCTIONS (JSONBin.io)
+    function openCloudModal() {
+      document.getElementById('jsonbinIdInput').value = jsonbinId;
+      document.getElementById('jsonbinApiKeyInput').value = jsonbinApiKey;
+      document.getElementById('cloudModal').classList.remove('hidden');
+    }
 
-    // BROWSE & SEARCH MODAL
+    function closeCloudModal() {
+      document.getElementById('cloudModal').classList.add('hidden');
+    }
+
+    function saveCloudConfig() {
+      jsonbinId = document.getElementById('jsonbinIdInput').value.trim();
+      jsonbinApiKey = document.getElementById('jsonbinApiKeyInput').value.trim();
+      
+      localStorage.setItem('poodle_jsonbin_id', jsonbinId);
+      localStorage.setItem('poodle_jsonbin_key', jsonbinApiKey);
+      
+      updateCloudStatusBadge();
+      closeCloudModal();
+      alert('Cloud Hub settings saved successfully!');
+    }
+
+    function updateCloudStatusBadge() {
+      const badge = document.getElementById('cloudStatusBadge');
+      if (jsonbinId) {
+        badge.innerText = 'Cloud Active';
+      } else {
+        badge.innerText = 'Cloud Hub';
+      }
+    }
+
+    async function publishToGlobalCloud() {
+      if (!jsonbinId) {
+        alert('Please specify a JSONBin.io Bin ID first to publish to the cloud!');
+        return;
+      }
+
+      // Collect all local public blocks
+      let localPublicBlocks = [];
+      Object.keys(users).forEach(u => {
+        (users[u].blocks || []).forEach(b => {
+          if (b.isPublic) localPublicBlocks.push({ ...b, author: u, source: 'cloud' });
+        });
+      });
+
+      if (localPublicBlocks.length === 0) {
+        alert('You have no public blocks to publish! Toggle the "Private" button on a block to make it "Public" first.');
+        return;
+      }
+
+      try {
+        // Fetch existing cloud blocks to merge
+        let headers = { 'Content-Type': 'application/json' };
+        if (jsonbinApiKey) headers['X-Master-Key'] = jsonbinApiKey;
+
+        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${jsonbinId}/latest`, { headers });
+        let existingCloudBlocks = [];
+        if (getRes.ok) {
+          const data = await getRes.json();
+          existingCloudBlocks = Array.isArray(data.record) ? data.record : [];
+        }
+
+        // Merge local public blocks with existing cloud blocks (deduplicating by block ID)
+        const combined = [...localPublicBlocks];
+        existingCloudBlocks.forEach(cb => {
+          if (!combined.some(lb => lb.id === cb.id)) {
+            combined.push(cb);
+          }
+        });
+
+        // Put merged list back to JSONBin
+        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${jsonbinId}`, {
+          method: 'PUT',
+          headers: headers,
+          body: JSON.stringify(combined)
+        });
+
+        if (putRes.ok) {
+          alert(`Successfully published ${localPublicBlocks.length} public post(s) to the global cloud!`);
+          closeCloudModal();
+        } else {
+          alert('Failed to publish to cloud. Please check your Bin ID and Master Key permissions.');
+        }
+      } catch (err) {
+        console.error('Cloud Sync Error:', err);
+        alert('Network error trying to connect to Cloud Hub.');
+      }
+    }
+
+    // BROWSE & SEARCH PUBLIC POSTS
     const browseModal = document.getElementById('browseModal');
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
 
     document.getElementById('browseBtn').onclick = () => {
-      // Fresh re-read of all user data from local storage so cross-account posts sync immediately
-      users = JSON.parse(localStorage.getItem('poodle_users')) || {};
       browseModal.classList.remove('hidden');
       searchInput.value = '';
-      renderSearchResults('');
+      fetchPublicPosts();
       searchInput.focus();
     };
 
     document.getElementById('closeBrowseBtn').onclick = () => browseModal.classList.add('hidden');
+    searchInput.oninput = (e) => filterAndDisplayPublicPosts(e.target.value);
 
-    searchInput.oninput = (e) => renderSearchResults(e.target.value);
+    let cachedPublicPosts = [];
 
-    function renderSearchResults(query) {
-      const q = query.toLowerCase().trim();
-      let allPublicBlocks = [];
+    async function fetchPublicPosts() {
+      document.getElementById('browseSourceInfo').innerText = 'Fetching public posts...';
+      users = JSON.parse(localStorage.getItem('poodle_users')) || {};
+      
+      let posts = [];
 
+      // 1. Gather local public posts across all users saved in LocalStorage
       Object.keys(users).forEach(u => {
         (users[u].blocks || []).forEach(b => {
-          if (b.isPublic) allPublicBlocks.push({ ...b, author: u });
+          if (b.isPublic) posts.push({ ...b, author: u, source: 'Local' });
         });
       });
 
-      const filtered = allPublicBlocks.filter(b => 
+      // 2. If JSONBin Cloud is configured, fetch global posts
+      if (jsonbinId) {
+        try {
+          let headers = {};
+          if (jsonbinApiKey) headers['X-Master-Key'] = jsonbinApiKey;
+
+          const res = await fetch(`https://api.jsonbin.io/v3/b/${jsonbinId}/latest`, { headers });
+          if (res.ok) {
+            const cloudData = await res.json();
+            const cloudPosts = Array.isArray(cloudData.record) ? cloudData.record : [];
+            
+            cloudPosts.forEach(cp => {
+              // Avoid duplicate entries if already present locally
+              if (!posts.some(p => p.id === cp.id)) {
+                posts.push({ ...cp, source: 'Cloud' });
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Unable to load from cloud:', err);
+        }
+      }
+
+      cachedPublicPosts = posts;
+      document.getElementById('browseSourceInfo').innerText = `Found ${posts.length} public post(s) ${jsonbinId ? '(Local & Cloud Hub)' : '(Local storage)'}`;
+      filterAndDisplayPublicPosts(searchInput.value);
+    }
+
+    function filterAndDisplayPublicPosts(query) {
+      const q = query.toLowerCase().trim();
+      const filtered = cachedPublicPosts.filter(b => 
         (b.title || '').toLowerCase().includes(q) || 
-        (b.content || '').toLowerCase().includes(q)
+        (b.content || '').toLowerCase().includes(q) ||
+        (b.author || '').toLowerCase().includes(q)
       );
 
       searchResults.innerHTML = '';
       if (filtered.length === 0) {
-        searchResults.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No public posts matching your search.</div>`;
+        searchResults.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No public posts found. Toggle "Public" on your blocks to share them!</div>`;
         return;
       }
 
       filtered.forEach((block) => {
         const item = document.createElement('div');
-        item.className = 'p-3 rounded-lg border border-slate-200 hover:border-indigo-500 hover:bg-slate-50 transition cursor-pointer flex flex-col gap-1';
+        item.className = 'p-3.5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-slate-50/80 transition cursor-pointer flex flex-col gap-1.5 shadow-sm';
         
-        // Strip HTML tag for snippet text
         const snippetText = (block.content || '').replace(/<[^>]*>?/gm, '');
 
         item.innerHTML = `
           <div class="flex items-center justify-between">
-            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
               <span>${escapeHtml(block.title || 'Untitled')}</span>
             </h4>
-            <span class="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded-full font-bold">@${escapeHtml(block.author)}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] ${block.source === 'Cloud' ? 'bg-sky-100 text-sky-700 border-sky-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'} border px-2 py-0.5 rounded-full font-bold">@${escapeHtml(block.author || 'Anonymous')}</span>
+              <span class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">${block.source || 'Local'}</span>
+            </div>
           </div>
-          <p class="text-xs text-slate-500 line-clamp-2 mt-1">${escapeHtml(snippetText)}</p>
-          <div class="flex items-center justify-between text-[11px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
-            <span>Click to view post details</span>
+          <p class="text-xs text-slate-600 line-clamp-2">${escapeHtml(snippetText)}</p>
+          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+            <span class="text-indigo-600 font-semibold hover:underline">Click to open post details & import</span>
             <span>${block.updatedAt || ''}</span>
           </div>
         `;
@@ -660,7 +883,8 @@
 
     function openPublicPostModal(block) {
       activeViewedPost = block;
-      document.getElementById('postAuthorBadge').innerText = `@${block.author}`;
+      document.getElementById('postAuthorBadge').innerText = `@${block.author || 'Anonymous'}`;
+      document.getElementById('postOriginBadge').innerText = block.source || 'Local';
       document.getElementById('postViewTitle').innerText = block.title || 'Untitled';
       document.getElementById('postViewContent').innerHTML = block.content || '';
       document.getElementById('postViewDate').innerText = block.updatedAt ? `Last updated: ${block.updatedAt}` : '';
@@ -685,9 +909,7 @@
       activeViewedPost = null;
     }
 
-    document.getElementById('closeViewPostBtn').onclick = closeViewPostModal;
-
-    // IMPORT PUBLIC POST TO MY WORKSPACE
+    // IMPORT PUBLIC POST TO WORKSPACE
     document.getElementById('importPostBtn').onclick = () => {
       if (!activeViewedPost) return;
       const importedBlock = {
@@ -702,7 +924,67 @@
       saveState();
       closeViewPostModal();
       browseModal.classList.add('hidden');
+      alert('Block copied to your personal workspace!');
     };
+
+    // EXPORT & IMPORT SHARED BUNDLES
+    function exportPublicBundle() {
+      let publicBlocks = [];
+      Object.keys(users).forEach(u => {
+        (users[u].blocks || []).forEach(b => {
+          if (b.isPublic) publicBlocks.push({ ...b, author: u });
+        });
+      });
+
+      if (publicBlocks.length === 0) {
+        alert('No public blocks to export!');
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(publicBlocks, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `poodle-public-bundle.json`;
+      a.click();
+    }
+
+    function importPublicBundle(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedBlocks = JSON.parse(e.target.result);
+          if (Array.isArray(importedBlocks)) {
+            let addedCount = 0;
+            importedBlocks.forEach(ib => {
+              if (ib.content && !blocks.some(b => b.id === ib.id)) {
+                blocks.unshift({
+                  id: 'block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                  title: ib.title || 'Imported Post',
+                  content: ib.content,
+                  images: ib.images || [],
+                  isPublic: false,
+                  updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
+                addedCount++;
+              }
+            });
+            saveState();
+            alert(`Successfully imported ${addedCount} block(s) to your workspace!`);
+          }
+        } catch (err) {
+          alert('Invalid JSON bundle file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // SETTINGS MODAL
+    const settingsModal = document.getElementById('settingsModal');
+    document.getElementById('settingsBtn').onclick = () => settingsModal.classList.remove('hidden');
+    document.getElementById('closeSettingsBtn').onclick = () => settingsModal.classList.add('hidden');
 
     // FULLSCREEN FOCUS MODE
     const fsModal = document.getElementById('fullscreenModal');
@@ -739,7 +1021,7 @@
       if (currentFsIndex < blocks.length - 1) { currentFsIndex++; loadFsData(); }
     };
 
-    // UTILS
+    // EXPORT WORKSPACE JSON
     document.getElementById('addBlockBtn').onclick = addNewBlock;
     document.getElementById('exportBtn').onclick = () => {
       const blob = new Blob([JSON.stringify(blocks, null, 2)], { type: 'application/json' });
