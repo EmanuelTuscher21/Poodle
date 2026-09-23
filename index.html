@@ -109,7 +109,7 @@
 
       <button id="browseBtn" class="flex items-center gap-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-lg font-medium text-sm transition">
         <i data-lucide="search" class="w-4 h-4"></i>
-        <span>Browse</span>
+        <span>Browse Public</span>
       </button>
 
       <button id="settingsBtn" class="p-2 text-slate-600 hover:bg-slate-200 rounded-lg transition" title="Settings">
@@ -181,6 +181,45 @@
 
       <div id="searchResults" class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-3">
         <!-- Search results dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- PUBLIC POST VIEW / PREVIEW MODAL -->
+  <div id="viewPostModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-box bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-900 border border-slate-200">
+      <!-- HEADER -->
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-1 rounded-full text-xs flex items-center gap-1">
+            <i data-lucide="globe" class="w-3.5 h-3.5"></i> Public Post
+          </span>
+          <span id="postAuthorBadge" class="bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full text-xs">@author</span>
+        </div>
+        <button id="closeViewPostBtn" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- POST BODY CONTENT -->
+      <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+        <h2 id="postViewTitle" class="text-2xl font-bold text-slate-900 border-b border-slate-100 pb-2"></h2>
+        <div id="postViewContent" class="text-slate-800 leading-relaxed text-base space-y-3"></div>
+        <div id="postViewImages" class="space-y-3 pt-2"></div>
+      </div>
+
+      <!-- FOOTER / ACTIONS -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <span id="postViewDate" class="text-xs text-slate-500"></span>
+        <div class="flex gap-2">
+          <button id="importPostBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>Import to My Workspace</span>
+          </button>
+          <button onclick="closeViewPostModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
+            Close
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -262,6 +301,7 @@
     let currentTheme = localStorage.getItem('poodle_theme') || 'light';
     let deleteTargetId = null;
     let currentFsIndex = 0;
+    let activeViewedPost = null;
 
     // INITIALIZE
     document.addEventListener('DOMContentLoaded', () => {
@@ -274,7 +314,7 @@
         showAuth();
       }
 
-      // Enter key shortcut
+      // Enter key shortcut to add new block
       document.addEventListener('keydown', (e) => {
         if (currentUser && e.key === 'Enter' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) && !e.target.isContentEditable) {
           e.preventDefault();
@@ -449,7 +489,7 @@
 
             <!-- IMAGES -->
             <div class="space-y-2">
-              ${block.images.map((img, imgIdx) => `
+              ${(block.images || []).map((img, imgIdx) => `
                 <div class="relative group rounded-lg overflow-hidden border border-slate-200">
                   <img src="${img}" class="w-full h-36 object-cover">
                   <button onclick="removeImage('${block.id}',${imgIdx})" class="absolute top-1 right-1 bg-black/60 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition">
@@ -507,6 +547,7 @@
       reader.onload = (e) => {
         const b = blocks.find(x => x.id === id);
         if (b) {
+          if (!b.images) b.images = [];
           b.images.push(e.target.result);
           saveState();
         }
@@ -516,7 +557,7 @@
 
     function removeImage(id, imgIdx) {
       const b = blocks.find(x => x.id === id);
-      if (b) {
+      if (b && b.images) {
         b.images.splice(imgIdx, 1);
         saveState();
       }
@@ -573,7 +614,10 @@
         });
       });
 
-      const filtered = allPublicBlocks.filter(b => b.title.toLowerCase().includes(q) || b.content.toLowerCase().includes(q));
+      const filtered = allPublicBlocks.filter(b => 
+        (b.title || '').toLowerCase().includes(q) || 
+        (b.content || '').toLowerCase().includes(q)
+      );
 
       searchResults.innerHTML = '';
       if (filtered.length === 0) {
@@ -581,19 +625,80 @@
         return;
       }
 
-      filtered.forEach(block => {
+      filtered.forEach((block, index) => {
         const item = document.createElement('div');
-        item.className = 'p-3 rounded-lg border border-slate-200 hover:border-indigo-500 hover:bg-slate-50 transition cursor-pointer';
+        item.className = 'p-3 rounded-lg border border-slate-200 hover:border-indigo-500 hover:bg-slate-50 transition cursor-pointer flex flex-col gap-1';
+        
+        // Strip HTML tag for snippet text
+        const snippetText = (block.content || '').replace(/<[^>]*>?/gm, '');
+
         item.innerHTML = `
           <div class="flex items-center justify-between">
-            <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(block.title)}</h4>
-            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">By @${block.author}</span>
+            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+              <span>${escapeHtml(block.title || 'Untitled')}</span>
+            </h4>
+            <span class="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded-full font-bold">@${escapeHtml(block.author)}</span>
           </div>
-          <p class="text-xs text-slate-500 line-clamp-2 mt-1">${block.content.replace(/<[^>]*>?/gm, '')}</p>
+          <p class="text-xs text-slate-500 line-clamp-2 mt-1">${escapeHtml(snippetText)}</p>
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mt-1 pt-1 border-t border-slate-100">
+            <span>Click to view post details</span>
+            <span>${block.updatedAt || ''}</span>
+          </div>
         `;
+
+        item.onclick = () => openPublicPostModal(block);
         searchResults.appendChild(item);
       });
     }
+
+    // VIEW PUBLIC POST MODAL LOGIC
+    const viewPostModal = document.getElementById('viewPostModal');
+
+    function openPublicPostModal(block) {
+      activeViewedPost = block;
+      document.getElementById('postAuthorBadge').innerText = `@${block.author}`;
+      document.getElementById('postViewTitle').innerText = block.title || 'Untitled';
+      document.getElementById('postViewContent').innerHTML = block.content || '';
+      document.getElementById('postViewDate').innerText = block.updatedAt ? `Last updated: ${block.updatedAt}` : '';
+
+      const imagesContainer = document.getElementById('postViewImages');
+      imagesContainer.innerHTML = '';
+      if (block.images && block.images.length > 0) {
+        block.images.forEach(imgSrc => {
+          const img = document.createElement('img');
+          img.src = imgSrc;
+          img.className = 'w-full max-h-[400px] object-cover rounded-xl border border-slate-200 shadow-sm';
+          imagesContainer.appendChild(img);
+        });
+      }
+
+      lucide.createIcons();
+      viewPostModal.classList.remove('hidden');
+    }
+
+    function closeViewPostModal() {
+      viewPostModal.classList.add('hidden');
+      activeViewedPost = null;
+    }
+
+    document.getElementById('closeViewPostBtn').onclick = closeViewPostModal;
+
+    // IMPORT PUBLIC POST TO MY WORKSPACE
+    document.getElementById('importPostBtn').onclick = () => {
+      if (!activeViewedPost) return;
+      const importedBlock = {
+        id: 'block_' + Date.now(),
+        title: `${activeViewedPost.title} (Copy)`,
+        content: activeViewedPost.content,
+        images: activeViewedPost.images ? [...activeViewedPost.images] : [],
+        isPublic: false,
+        updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      blocks.unshift(importedBlock);
+      saveState();
+      closeViewPostModal();
+      browseModal.classList.add('hidden');
+    };
 
     // FULLSCREEN FOCUS MODE
     const fsModal = document.getElementById('fullscreenModal');
@@ -614,7 +719,7 @@
       fsTitle.value = b.title;
       fsContent.innerHTML = b.content;
 
-      fsImageContainer.innerHTML = b.images.map(img => `
+      fsImageContainer.innerHTML = (b.images || []).map(img => `
         <img src="${img}" class="w-full max-h-[500px] object-cover rounded-xl border border-slate-200">
       `).join('');
 
@@ -641,7 +746,7 @@
     };
 
     function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
   </script>
 </body>
